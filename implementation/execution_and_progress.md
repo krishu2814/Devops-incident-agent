@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 2 Complete (Ready for Phase 3)
-- **Completed:** 2 / 18 Phases
-- **Remaining:** 16 Phases
+- **Current Phase:** Phase 3 Complete (Ready for Phase 4)
+- **Completed:** 3 / 18 Phases
+- **Remaining:** 15 Phases
 
 ---
 
@@ -13,8 +13,8 @@
 |---|---|---|---|
 | **Phase 1** | Basic Node.js + TypeScript Backend | Completed | Express server, `GET /health`, `POST /incidents` |
 | **Phase 2** | Simulated Infrastructure | Completed | Mock data, `getServiceHealth`, `getServiceMetrics`, `getServiceLogs`, `getRecentDeployments`, `/services` routes |
-| **Phase 3** | LangChain Tools | Upcoming | Wrap functions into typed LangChain dynamic tools with Zod schemas |
-| **Phase 4** | Basic LangGraph Agent | Upcoming | Define `IncidentState`, basic graph with START -> Agent -> Tool -> END |
+| **Phase 3** | LangChain Tools | Completed | `@langchain/core` + `zod` tools (`get_service_health`, `get_service_metrics`, `search_logs`, `get_recent_deployments`) |
+| **Phase 4** | Basic LangGraph Agent | Upcoming | Install `@langchain/langgraph`, define `IncidentState`, basic graph with START -> Agent -> Tool -> END |
 | **Phase 5** | Investigation Agent | Upcoming | Multi-step agent selecting diagnostic tools dynamically |
 | **Phase 6** | Root Cause Analysis (RCA) | Upcoming | RCA node outputting probable cause, confidence score, and supporting evidence |
 | **Phase 7** | Remediation Plan | Upcoming | Remediation node proposing actions (`rollback`, `restart`, `scale`, `do_nothing`) |
@@ -32,11 +32,8 @@
 
 ---
 
-## Detailed Execution Plan for Phase 3 (Next)
-1. **Dependencies:** Install `@langchain/core` and `zod` for structured tool definitions.
-2. **Tool Implementations:**
-   - `get_service_health` (takes `serviceName: string`)
-   - `get_service_metrics` (takes `serviceName: string`)
-   - `search_logs` (takes `serviceName: string`, optional `limit: number`)
-   - `get_recent_deployments` (takes `serviceName: string`)
-3. **Validation:** Write a small script to test running each tool directly with inputs.
+## Detailed Execution Plan for Phase 4 (Next)
+1. **Dependencies:** Install `@langchain/langgraph`.
+2. **State Definition:** Create `IncidentState` defining `serviceName`, `problem`, `findings`, and `messages`.
+3. **Graph Workflow:** Construct a minimal LangGraph with `StateGraph`, connecting `START -> agentNode -> toolNode -> END`.
+4. **Validation:** Execute a test run of the state transitions and verify state updates.

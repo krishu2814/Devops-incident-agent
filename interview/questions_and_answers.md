@@ -85,3 +85,20 @@ The LLM can only select from predefined, safe application functions with typed p
 2. **Horizontal Queue Workers:** BullMQ workers scale horizontally across multiple instances or pods.
 3. **Rate Limiting & LLM Concurrency:** Throttling concurrent LLM requests to avoid hitting provider token rate limits.
 4. **Caching:** Storing recent metrics and log searches in Redis so identical queries within a 60-second window don't hammer observability backends."
+
+---
+
+## 3. LangChain Tools (Phase 3)
+
+### Q: "What is a LangChain Tool, and what role does Zod schema validation play?"
+**Answer:**
+"A tool in LangChain is a callable function combined with a name, a natural language description, and an input schema (defined using Zod in TypeScript). 
+The description explains *when and why* the LLM should call the tool. The Zod schema generates JSON Schema definitions that the LLM's function-calling engine uses to guarantee that input parameters (like `serviceName` or `limit`) adhere to expected types before our code executes."
+
+### Q: "Why do LangChain tools return strings (like JSON strings) rather than raw objects?"
+**Answer:**
+"LLMs are text-in, text-out neural networks. When an agent decides to call a tool, the tool execution result is packaged into a `ToolMessage` that is appended to the chat context sent back to the model. Returning a JSON string ensures the LLM receives structured, token-efficient observations it can parse and reason about directly."
+
+### Q: "What happens if a tool throws an exception during an investigation?"
+**Answer:**
+"If a tool throws an uncaught error, the entire agent execution would crash. In our implementation, each tool wraps its logic in a `try/catch` block and returns a stringified error message (e.g. `JSON.stringify({ error: error.message })`). This allows the LLM to observe the failure (e.g. 'Service not found'), reason about it, and either retry with different parameters or fall back to alternative diagnostics."
