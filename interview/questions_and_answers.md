@@ -102,3 +102,28 @@ The description explains *when and why* the LLM should call the tool. The Zod sc
 ### Q: "What happens if a tool throws an exception during an investigation?"
 **Answer:**
 "If a tool throws an uncaught error, the entire agent execution would crash. In our implementation, each tool wraps its logic in a `try/catch` block and returns a stringified error message (e.g. `JSON.stringify({ error: error.message })`). This allows the LLM to observe the failure (e.g. 'Service not found'), reason about it, and either retry with different parameters or fall back to alternative diagnostics."
+
+---
+
+## 4. Basic LangGraph Agent (Phase 4)
+
+### Q: "What is LangGraph and what are its core building blocks?"
+**Answer:**
+"LangGraph is an orchestration framework for building stateful, multi-actor applications with LLMs as graphs. Its key building blocks are:
+1. **State:** The central schema that holds data and messages throughout the entire execution.
+2. **Nodes:** Normal JavaScript/TypeScript functions that take the current state as input, perform work (like reasoning or executing a tool), and return updates to the state.
+3. **Edges:** Directed connections defining the execution path between nodes.
+4. **Conditional Edges:** Dynamic routers that inspect the updated state to decide which node should execute next or whether to stop at `END`.
+5. **Graph:** The compiled state machine connecting all nodes and edges."
+
+### Q: "How does State Reducer work in LangGraph?"
+**Answer:**
+"By default, when a node returns a field update, it overwrites the previous value in the state. However, for arrays like `findings` or message histories, we use a **Reducer function** (e.g., `(curr, update) => curr.concat(update)`). This allows each node to append newly discovered diagnostic findings without accidentally wiping out past discoveries."
+
+### Q: "How does the `agent -> tool -> agent` loop work?"
+**Answer:**
+"1. **Agent Node:** Looks at the current state. If `findings` are empty, it sets `nextAction = 'check_health'`.
+2. **Conditional Edge:** Checks `nextAction`. Because it is not 'complete', it routes to the `tool` node.
+3. **Tool Node:** Runs the selected tool (`get_service_health`), appends the observation into `findings`, and routes back to `agent`.
+4. **Agent Node (2nd pass):** Reads the updated findings. Since the needed evidence is gathered, it sets `nextAction = 'complete'`.
+5. **Conditional Edge:** Detects `complete` and routes to `END`."

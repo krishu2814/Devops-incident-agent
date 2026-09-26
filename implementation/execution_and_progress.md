@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 3 Complete (Ready for Phase 4)
-- **Completed:** 3 / 18 Phases
-- **Remaining:** 15 Phases
+- **Current Phase:** Phase 4 Complete (Ready for Phase 5)
+- **Completed:** 4 / 18 Phases
+- **Remaining:** 14 Phases
 
 ---
 
@@ -14,8 +14,8 @@
 | **Phase 1** | Basic Node.js + TypeScript Backend | Completed | Express server, `GET /health`, `POST /incidents` |
 | **Phase 2** | Simulated Infrastructure | Completed | Mock data, `getServiceHealth`, `getServiceMetrics`, `getServiceLogs`, `getRecentDeployments`, `/services` routes |
 | **Phase 3** | LangChain Tools | Completed | `@langchain/core` + `zod` tools (`get_service_health`, `get_service_metrics`, `search_logs`, `get_recent_deployments`) |
-| **Phase 4** | Basic LangGraph Agent | Upcoming | Install `@langchain/langgraph`, define `IncidentState`, basic graph with START -> Agent -> Tool -> END |
-| **Phase 5** | Investigation Agent | Upcoming | Multi-step agent selecting diagnostic tools dynamically |
+| **Phase 4** | Basic LangGraph Agent | Completed | `@langchain/langgraph` installed, `IncidentAnnotation`, `IncidentState`, `START -> agent -> tool -> agent -> END`, wired to `POST /incidents` |
+| **Phase 5** | Investigation Agent | Upcoming | Multi-step agent selecting diagnostic tools dynamically (health, metrics, logs, deployments) |
 | **Phase 6** | Root Cause Analysis (RCA) | Upcoming | RCA node outputting probable cause, confidence score, and supporting evidence |
 | **Phase 7** | Remediation Plan | Upcoming | Remediation node proposing actions (`rollback`, `restart`, `scale`, `do_nothing`) |
 | **Phase 8** | Human-in-the-Loop | Upcoming | Pause graph at approval node; `/approve` and `/reject` endpoints |
@@ -32,8 +32,10 @@
 
 ---
 
-## Detailed Execution Plan for Phase 4 (Next)
-1. **Dependencies:** Install `@langchain/langgraph`.
-2. **State Definition:** Create `IncidentState` defining `serviceName`, `problem`, `findings`, and `messages`.
-3. **Graph Workflow:** Construct a minimal LangGraph with `StateGraph`, connecting `START -> agentNode -> toolNode -> END`.
-4. **Validation:** Execute a test run of the state transitions and verify state updates.
+## Detailed Execution Plan for Phase 5 (Next)
+1. **Multi-Tool Diagnostic Loop:** Expand the agent node to dynamically reason about what tool to call next based on findings collected so far:
+   - Check health -> if unhealthy, check metrics
+   - If latency/errors high -> search recent logs
+   - If logs show error after release -> check recent deployments
+2. **Prevent Loops:** Cap total investigation steps to prevent infinite cycles.
+3. **Synthesis:** Produce a structured findings summary ready for Root Cause Analysis (Phase 6).
