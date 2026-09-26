@@ -1,6 +1,7 @@
 import express from "express";
 import healthRouter from "./routes/health";
 import incidentsRouter from "./routes/incidents";
+import servicesRouter from "./routes/services";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,7 @@ app.use(express.json());
 
 app.use("/health", healthRouter);
 app.use("/incidents", incidentsRouter);
+app.use("/services", servicesRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
