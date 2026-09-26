@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 4 Complete (Ready for Phase 5)
-- **Completed:** 4 / 18 Phases
-- **Remaining:** 14 Phases
+- **Current Phase:** Phase 5 Complete (Ready for Phase 6)
+- **Completed:** 5 / 18 Phases
+- **Remaining:** 13 Phases
 
 ---
 
@@ -15,7 +15,7 @@
 | **Phase 2** | Simulated Infrastructure | Completed | Mock data, `getServiceHealth`, `getServiceMetrics`, `getServiceLogs`, `getRecentDeployments`, `/services` routes |
 | **Phase 3** | LangChain Tools | Completed | `@langchain/core` + `zod` tools (`get_service_health`, `get_service_metrics`, `search_logs`, `get_recent_deployments`) |
 | **Phase 4** | Basic LangGraph Agent | Completed | `@langchain/langgraph` installed, `IncidentAnnotation`, `IncidentState`, `START -> agent -> tool -> agent -> END`, wired to `POST /incidents` |
-| **Phase 5** | Investigation Agent | Upcoming | Multi-step agent selecting diagnostic tools dynamically (health, metrics, logs, deployments) |
+| **Phase 5** | Investigation Agent | Completed | Multi-step agent dynamically selecting diagnostic tools (health, metrics, logs, deployments) with deduplication & circuit breaker |
 | **Phase 6** | Root Cause Analysis (RCA) | Upcoming | RCA node outputting probable cause, confidence score, and supporting evidence |
 | **Phase 7** | Remediation Plan | Upcoming | Remediation node proposing actions (`rollback`, `restart`, `scale`, `do_nothing`) |
 | **Phase 8** | Human-in-the-Loop | Upcoming | Pause graph at approval node; `/approve` and `/reject` endpoints |
@@ -32,10 +32,8 @@
 
 ---
 
-## Detailed Execution Plan for Phase 5 (Next)
-1. **Multi-Tool Diagnostic Loop:** Expand the agent node to dynamically reason about what tool to call next based on findings collected so far:
-   - Check health -> if unhealthy, check metrics
-   - If latency/errors high -> search recent logs
-   - If logs show error after release -> check recent deployments
-2. **Prevent Loops:** Cap total investigation steps to prevent infinite cycles.
-3. **Synthesis:** Produce a structured findings summary ready for Root Cause Analysis (Phase 6).
+## Detailed Execution Plan for Phase 6 (Next)
+1. **RCA State Fields:** Add `rootCause`, `confidence` (number 0-1), `confidenceLevel` (`confirmed` | `probable` | `uncertain`), and `evidence` (`string[]`) to `IncidentState`.
+2. **Root Cause Analysis Node:** Create `src/agents/rootCause.ts` that synthesizes findings from metrics, logs, and deployments to establish causality.
+3. **Graph Transition:** Connect `investigator` (when complete) -> `rootCauseNode` -> `END`.
+4. **Validation:** Verify RCA generation for broken services (`payment-service`) and healthy services (`order-service`).

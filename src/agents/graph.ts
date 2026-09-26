@@ -1,42 +1,23 @@
 import { StateGraph, START, END } from "@langchain/langgraph";
 import { IncidentAnnotation, IncidentState } from "./state";
-import { getServiceHealthTool } from "../tools/health";
-
-async function agentNode(state: IncidentState) {
-  if (state.findings.length === 0) {
-    return { nextAction: "check_health" };
-  }
-  return { nextAction: "complete" };
-}
-
-async function toolNode(state: IncidentState) {
-  if (state.nextAction === "check_health") {
-    const rawResult = await getServiceHealthTool.invoke({
-      serviceName: state.serviceName
-    });
-    return {
-      findings: [`Health tool result: ${rawResult}`]
-    };
-  }
-  return {};
-}
+import { investigatorNode, toolsNode } from "./investigator";
 
 function shouldContinue(state: IncidentState) {
-  if (state.nextAction === "complete") {
+  if (state.nextAction === "complete" || (state.toolsCalled && state.toolsCalled.length >= 4)) {
     return END;
   }
-  return "tool";
+  return "tools";
 }
 
 export const incidentGraph = new StateGraph(IncidentAnnotation)
-  .addNode("agent", agentNode)
-  .addNode("tool", toolNode)
-  .addEdge(START, "agent")
-  .addConditionalEdges("agent", shouldContinue, {
-    tool: "tool",
+  .addNode("investigator", investigatorNode)
+  .addNode("tools", toolsNode)
+  .addEdge(START, "investigator")
+  .addConditionalEdges("investigator", shouldContinue, {
+    tools: "tools",
     [END]: END
   })
-  .addEdge("tool", "agent")
+  .addEdge("tools", "investigator")
   .compile();
 
 export async function runIncidentGraph(serviceName: string, problem: string) {
@@ -44,6 +25,7 @@ export async function runIncidentGraph(serviceName: string, problem: string) {
     serviceName,
     problem,
     findings: [],
+    toolsCalled: [],
     nextAction: ""
   });
   return finalState;

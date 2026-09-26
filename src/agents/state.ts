@@ -7,6 +7,10 @@ export const IncidentAnnotation = Annotation.Root({
     reducer: (curr, update) => curr.concat(update),
     default: () => []
   }),
+  toolsCalled: Annotation<string[]>({
+    reducer: (curr, update) => curr.concat(update),
+    default: () => []
+  }),
   nextAction: Annotation<string>
 });
 

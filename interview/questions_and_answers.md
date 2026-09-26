@@ -127,3 +127,20 @@ The description explains *when and why* the LLM should call the tool. The Zod sc
 3. **Tool Node:** Runs the selected tool (`get_service_health`), appends the observation into `findings`, and routes back to `agent`.
 4. **Agent Node (2nd pass):** Reads the updated findings. Since the needed evidence is gathered, it sets `nextAction = 'complete'`.
 5. **Conditional Edge:** Detects `complete` and routes to `END`."
+
+---
+
+## 5. Investigation Agent (Phase 5)
+
+### Q: "How does the Investigation Agent decide which tools to call?"
+**Answer:**
+"The agent mimics an SRE triage hierarchy:
+1. **Health Check:** First checks if the service is marked unhealthy.
+2. **Metrics:** If degraded or investigating an alert, fetches latency, error rates, and CPU/memory to measure the severity of the impact.
+3. **Logs:** Queries logs around the incident window to find specific stack traces, error codes (like HTTP 504), or warnings (like database query timeouts).
+4. **Deployments:** Queries recent deployment history to see if a release or configuration change immediately preceded the spike in errors.
+Once this chain of diagnostic evidence is compiled into the state, the agent transitions to `complete`."
+
+### Q: "How do you prevent the agent from calling the same tool repeatedly or getting stuck in infinite loops?"
+**Answer:**
+"We track a `toolsCalled` array in the LangGraph state. Before selecting an action, the investigator node checks if that tool has already been invoked. In addition, our conditional edge includes a hard circuit breaker: if `toolsCalled.length >= 4`, it terminates the investigation loop immediately and routes to `END`, preventing infinite recursion."

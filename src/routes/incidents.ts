@@ -25,13 +25,14 @@ router.post("/", async (req: Request, res: Response) => {
       id: Date.now().toString(),
       service: graphResult.serviceName,
       message: graphResult.problem,
-      status: "investigating",
+      status: "investigated",
+      toolsCalled: graphResult.toolsCalled,
       findings: graphResult.findings,
       createdAt: new Date().toISOString()
     };
 
     res.status(201).json({
-      message: "Incident received and processed through LangGraph agent",
+      message: "Incident investigated successfully by LangGraph agent",
       incident
     });
   } catch (error: any) {
