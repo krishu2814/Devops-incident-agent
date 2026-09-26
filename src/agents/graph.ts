@@ -1,10 +1,11 @@
 import { StateGraph, START, END } from "@langchain/langgraph";
 import { IncidentAnnotation, IncidentState } from "./state";
 import { investigatorNode, toolsNode } from "./investigator";
+import { rootCauseNode } from "./rootCause";
 
 function shouldContinue(state: IncidentState) {
   if (state.nextAction === "complete" || (state.toolsCalled && state.toolsCalled.length >= 4)) {
-    return END;
+    return "root_cause";
   }
   return "tools";
 }
@@ -12,12 +13,14 @@ function shouldContinue(state: IncidentState) {
 export const incidentGraph = new StateGraph(IncidentAnnotation)
   .addNode("investigator", investigatorNode)
   .addNode("tools", toolsNode)
+  .addNode("root_cause", rootCauseNode)
   .addEdge(START, "investigator")
   .addConditionalEdges("investigator", shouldContinue, {
     tools: "tools",
-    [END]: END
+    root_cause: "root_cause"
   })
   .addEdge("tools", "investigator")
+  .addEdge("root_cause", END)
   .compile();
 
 export async function runIncidentGraph(serviceName: string, problem: string) {

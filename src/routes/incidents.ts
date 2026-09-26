@@ -26,13 +26,17 @@ router.post("/", async (req: Request, res: Response) => {
       service: graphResult.serviceName,
       message: graphResult.problem,
       status: "investigated",
+      rootCause: graphResult.rootCause,
+      confidence: graphResult.confidence,
+      confidenceLevel: graphResult.confidenceLevel,
+      evidence: graphResult.evidence,
       toolsCalled: graphResult.toolsCalled,
       findings: graphResult.findings,
       createdAt: new Date().toISOString()
     };
 
     res.status(201).json({
-      message: "Incident investigated successfully by LangGraph agent",
+      message: "Incident investigated and root cause analyzed by LangGraph agent",
       incident
     });
   } catch (error: any) {

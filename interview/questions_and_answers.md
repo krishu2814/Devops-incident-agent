@@ -144,3 +144,22 @@ Once this chain of diagnostic evidence is compiled into the state, the agent tra
 ### Q: "How do you prevent the agent from calling the same tool repeatedly or getting stuck in infinite loops?"
 **Answer:**
 "We track a `toolsCalled` array in the LangGraph state. Before selecting an action, the investigator node checks if that tool has already been invoked. In addition, our conditional edge includes a hard circuit breaker: if `toolsCalled.length >= 4`, it terminates the investigation loop immediately and routes to `END`, preventing infinite recursion."
+
+---
+
+## 6. Root Cause Analysis (Phase 6)
+
+### Q: "How does the Root Cause Analysis (RCA) node operate in this architecture?"
+**Answer:**
+"The RCA node is a dedicated synthesis node that runs after all diagnostic evidence has been gathered. Instead of relying on guesswork, it correlates findings across independent telemetry streams:
+1. It cross-references service health with latency and error metrics.
+2. It correlates specific error logs (e.g., connection pool timeouts) with recent deployment changes (e.g., v42 updating connection pool config).
+3. It outputs a structured diagnosis: `rootCause`, numerical `confidence`, categorical `confidenceLevel`, and an explicit list of `evidence` items that justify the conclusion."
+
+### Q: "Why must the agent distinguish between 'confirmed', 'probable', and 'uncertain'?"
+**Answer:**
+"In site reliability engineering, executing high-impact remediation (like service restarts or rollbacks) based on false confidence can worsen an outage. 
+- **Confirmed:** Strong multi-source correlation (e.g. pool exhaustion logs directly following a database configuration deployment).
+- **Probable:** Degradation observed (high latency/errors), but missing exact causal log traces.
+- **Uncertain:** Telemetry is incomplete or inconclusive.
+Categorizing confidence allows downstream remediation and human operators to decide whether an automated rollback is justified or whether manual investigation is required."
