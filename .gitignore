@@ -4,5 +4,4 @@ dist/
 .env
 .env.*
 .DS_Store
-interview/
-implementation/
+
