@@ -200,3 +200,19 @@ By introducing an explicit approval gate (`waiting_for_approval`), the agent han
 The operator can later inspect the incident via `GET /incidents/:id` and submit their decision using:
 - `POST /incidents/:id/approve` (transitions status to `approved`, capturing operator identity and timestamp)
 - `POST /incidents/:id/reject` (transitions status to `rejected`, halting execution safely with a logged reason)."
+
+---
+
+## 9. Execute Remediation (Phase 9)
+
+### Q: "How does the system execute remediation actions once approved?"
+**Answer:**
+"Execution is encapsulated in dedicated, type-safe service routines (`rollbackDeployment`, `restartService`, `scaleService`):
+1. Upon operator approval (`POST /incidents/:id/approve`), the system looks up the proposed action and target parameters.
+2. It dispatches to the corresponding remediation routine.
+3. The routine mutates the infrastructure state (e.g., rolling back `payment-service` restores status to `healthy`, latency from `4200ms` down to `180ms`, error rate from `18%` to `1%`, and unshifts the previous release `v41` into the deployment history).
+4. The execution result and audit metadata are captured in `remediationExecution` on the incident."
+
+### Q: "Why avoid shell command execution in remediation routines?"
+**Answer:**
+"Using TypeScript routines that invoke well-defined APIs or SDKs (like Kubernetes client SDK or CloudFormation/Terraform APIs) prevents shell injection attacks, removes OS-level dependency quirks, and ensures strict type checking over operational arguments."

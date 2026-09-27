@@ -88,12 +88,12 @@ router.get("/:id", (req: Request, res: Response) => {
   res.json({ incident });
 });
 
-router.post("/:id/approve", (req: Request, res: Response) => {
+router.post("/:id/approve", async (req: Request, res: Response) => {
   const { decidedBy } = req.body as ApprovalBody;
   try {
-    const updated = approveIncident(req.params.id, decidedBy);
+    const updated = await approveIncident(req.params.id, decidedBy);
     res.json({
-      message: "Remediation plan approved by operator",
+      message: "Remediation plan approved and executed successfully",
       incident: updated
     });
   } catch (error: any) {

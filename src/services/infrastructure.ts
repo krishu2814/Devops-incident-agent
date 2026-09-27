@@ -121,3 +121,96 @@ export async function getRecentDeployments(serviceName: string) {
   }
   return serviceDeployments;
 }
+
+export async function rollbackDeployment(serviceName: string, targetVersion: string = "v41") {
+  const service = services[serviceName];
+  if (!service) {
+    throw new Error(`Service '${serviceName}' not found`);
+  }
+
+  service.status = "healthy";
+  service.latencyMs = 180;
+  service.errorRatePercent = 1;
+  service.cpuUsagePercent = 28;
+  service.memoryUsagePercent = 38;
+
+  const serviceDeployments = deployments[serviceName] || [];
+  serviceDeployments.unshift({
+    version: targetVersion,
+    deployedAt: new Date().toISOString(),
+    deployedBy: "devops-incident-agent",
+    status: "success",
+    description: `Automated rollback to ${targetVersion} to remediate incident`
+  });
+
+  const serviceLogs = logs[serviceName] || [];
+  serviceLogs.push({
+    timestamp: new Date().toISOString(),
+    level: "INFO",
+    message: `Service rolled back to ${targetVersion}. Connection pool reset and latency normalized.`
+  });
+
+  return {
+    service: serviceName,
+    action: "rollback",
+    version: targetVersion,
+    status: service.status,
+    latencyMs: service.latencyMs,
+    errorRatePercent: service.errorRatePercent
+  };
+}
+
+export async function restartService(serviceName: string) {
+  const service = services[serviceName];
+  if (!service) {
+    throw new Error(`Service '${serviceName}' not found`);
+  }
+
+  service.status = "healthy";
+  service.latencyMs = 190;
+  service.errorRatePercent = 1;
+  service.cpuUsagePercent = 30;
+  service.memoryUsagePercent = 40;
+
+  const serviceLogs = logs[serviceName] || [];
+  serviceLogs.push({
+    timestamp: new Date().toISOString(),
+    level: "INFO",
+    message: "Service restarted. Hung database connections terminated."
+  });
+
+  return {
+    service: serviceName,
+    action: "restart",
+    status: service.status,
+    latencyMs: service.latencyMs,
+    errorRatePercent: service.errorRatePercent
+  };
+}
+
+export async function scaleService(serviceName: string, replicas: number = 3) {
+  const service = services[serviceName];
+  if (!service) {
+    throw new Error(`Service '${serviceName}' not found`);
+  }
+
+  service.status = "healthy";
+  service.cpuUsagePercent = 25;
+  service.memoryUsagePercent = 32;
+  service.latencyMs = 150;
+
+  const serviceLogs = logs[serviceName] || [];
+  serviceLogs.push({
+    timestamp: new Date().toISOString(),
+    level: "INFO",
+    message: `Service scaled to ${replicas} replicas. Load distributed.`
+  });
+
+  return {
+    service: serviceName,
+    action: "scale",
+    replicas,
+    status: service.status,
+    latencyMs: service.latencyMs
+  };
+}

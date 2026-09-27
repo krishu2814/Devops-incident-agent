@@ -1,8 +1,10 @@
+import { executeRemediation, RemediationExecution } from "./remediationService";
+
 export type Incident = {
   id: string;
   service: string;
   message: string;
-  status: "waiting_for_approval" | "approved" | "rejected" | "resolved";
+  status: "waiting_for_approval" | "approved" | "rejected" | "resolved" | "executed";
   rootCause?: string;
   confidence?: number;
   confidenceLevel?: "confirmed" | "probable" | "uncertain";
@@ -12,6 +14,7 @@ export type Incident = {
     targetVersion?: string;
     reason?: string;
   };
+  remediationExecution?: RemediationExecution;
   toolsCalled?: string[];
   findings?: string[];
   approvalDecision?: {
@@ -39,7 +42,7 @@ export function getAllIncidents(): Incident[] {
   return Object.values(incidents);
 }
 
-export function approveIncident(id: string, decidedBy: string = "on-call-engineer"): Incident {
+export async function approveIncident(id: string, decidedBy: string = "on-call-engineer"): Promise<Incident> {
   const incident = incidents[id];
   if (!incident) {
     throw new Error(`Incident with id '${id}' not found`);
@@ -49,13 +52,19 @@ export function approveIncident(id: string, decidedBy: string = "on-call-enginee
     throw new Error(`Cannot approve incident in status '${incident.status}'`);
   }
 
-  incident.status = "approved";
+  const action = incident.remediation?.action || "do_nothing";
+  const targetVersion = incident.remediation?.targetVersion;
+
+  const execution = await executeRemediation(action, incident.service, targetVersion);
+
+  incident.status = "executed";
   incident.updatedAt = new Date().toISOString();
   incident.approvalDecision = {
     decision: "approved",
     decidedAt: new Date().toISOString(),
     decidedBy
   };
+  incident.remediationExecution = execution;
 
   return incident;
 }
