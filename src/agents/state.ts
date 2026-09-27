@@ -18,7 +18,8 @@ export const IncidentAnnotation = Annotation.Root({
   evidence: Annotation<string[] | undefined>,
   proposedAction: Annotation<"rollback" | "restart" | "scale" | "do_nothing" | undefined>,
   targetVersion: Annotation<string | undefined>,
-  remediationReason: Annotation<string | undefined>
+  remediationReason: Annotation<string | undefined>,
+  approvalStatus: Annotation<"waiting_for_approval" | "approved" | "rejected" | undefined>
 });
 
 export type IncidentState = typeof IncidentAnnotation.State;

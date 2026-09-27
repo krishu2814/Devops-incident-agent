@@ -182,3 +182,21 @@ Formulating a remediation proposal allows the system to:
 - **Restart:** Selected when degradation is linked to transient resource locks, memory leaks, or hung connection pools without a corresponding code change.
 - **Scale:** Selected when CPU/memory pressure is high but latency/errors stem strictly from high traffic volume rather than software bugs.
 - **Do Nothing:** Selected when the service is healthy or telemetry is inconclusive, preventing harmful unneeded actions."
+
+---
+
+## 8. Human-in-the-Loop (Phase 8)
+
+### Q: "How does Human-in-the-Loop (HITL) prevent catastrophic outages in DevOps automation?"
+**Answer:**
+"Automating diagnostics is low-risk, but automated state changes (rollbacks, restarts, pod scaling) carry significant operational risks:
+1. An automated rollback could conflict with scheduled database migrations or active maintenance windows.
+2. An automated restart could drop in-flight transactions during peak hours.
+By introducing an explicit approval gate (`waiting_for_approval`), the agent handles 95% of the cognitive burden (gathering evidence, diagnosing RCA, preparing the exact command), while leaving the final go/no-go decision with an authorized human engineer."
+
+### Q: "How do you handle asynchronous human approval across REST endpoints?"
+**Answer:**
+"When an incident is investigated and an action is proposed, the incident record is stored with status `waiting_for_approval`. The initial `POST /incidents` returns immediately with the incident ID and remediation plan.
+The operator can later inspect the incident via `GET /incidents/:id` and submit their decision using:
+- `POST /incidents/:id/approve` (transitions status to `approved`, capturing operator identity and timestamp)
+- `POST /incidents/:id/reject` (transitions status to `rejected`, halting execution safely with a logged reason)."
