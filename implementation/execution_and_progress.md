@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 6 Complete (Ready for Phase 7)
-- **Completed:** 6 / 18 Phases
-- **Remaining:** 12 Phases
+- **Current Phase:** Phase 7 Complete (Ready for Phase 8)
+- **Completed:** 7 / 18 Phases
+- **Remaining:** 11 Phases
 
 ---
 
@@ -17,7 +17,7 @@
 | **Phase 4** | Basic LangGraph Agent | Completed | `@langchain/langgraph` installed, `IncidentAnnotation`, `IncidentState`, `START -> agent -> tool -> agent -> END`, wired to `POST /incidents` |
 | **Phase 5** | Investigation Agent | Completed | Multi-step agent dynamically selecting diagnostic tools (health, metrics, logs, deployments) with deduplication & circuit breaker |
 | **Phase 6** | Root Cause Analysis (RCA) | Completed | `rootCauseNode` synthesizing findings, calculating confidence scores (confirmed/probable/uncertain), and aggregating explicit evidence |
-| **Phase 7** | Remediation Plan | Upcoming | Remediation node proposing actions (`rollback`, `restart`, `scale`, `do_nothing`) without executing yet |
+| **Phase 7** | Remediation Plan | Completed | `remediationNode` proposing actions (`rollback`, `restart`, `scale`, `do_nothing`) with technical justification, strictly non-mutating |
 | **Phase 8** | Human-in-the-Loop | Upcoming | Pause graph at approval node; `/approve` and `/reject` endpoints |
 | **Phase 9** | Execute Remediation | Upcoming | Mutate simulated infrastructure state upon human approval |
 | **Phase 10** | Verification | Upcoming | Re-check metrics/health post-remediation; halt if not recovered |
@@ -32,8 +32,11 @@
 
 ---
 
-## Detailed Execution Plan for Phase 7 (Next)
-1. **Remediation State Fields:** Add `proposedAction` (`rollback` | `restart` | `scale` | `do_nothing`), `targetVersion`, and `remediationReason` to `IncidentState`.
-2. **Remediation Node:** Create `src/agents/remediation.ts` that maps the RCA diagnosis into a proposed corrective strategy.
-3. **Graph Integration:** Update `src/agents/graph.ts` so `root_cause` transitions to `remediation` before `END`.
-4. **Safety Rule:** Ensure no mutations occur at this phase (proposals only).
+## Detailed Execution Plan for Phase 8 (Next)
+1. **Approval State:** Add `approvalStatus` (`pending` | `approved` | `rejected`) and `approvalDecisionBy` to `IncidentState`.
+2. **In-Memory Store:** Track active incidents by ID so they can be inspected, approved, or rejected across HTTP requests.
+3. **Approval Endpoints:**
+   - `POST /incidents/:id/approve`
+   - `POST /incidents/:id/reject`
+   - `GET /incidents/:id`
+4. **Safety Verification:** Rejecting terminates the remediation flow safely without mutating services.

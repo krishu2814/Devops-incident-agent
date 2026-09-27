@@ -25,18 +25,23 @@ router.post("/", async (req: Request, res: Response) => {
       id: Date.now().toString(),
       service: graphResult.serviceName,
       message: graphResult.problem,
-      status: "investigated",
+      status: "remediation_proposed",
       rootCause: graphResult.rootCause,
       confidence: graphResult.confidence,
       confidenceLevel: graphResult.confidenceLevel,
       evidence: graphResult.evidence,
+      remediation: {
+        action: graphResult.proposedAction,
+        targetVersion: graphResult.targetVersion,
+        reason: graphResult.remediationReason
+      },
       toolsCalled: graphResult.toolsCalled,
       findings: graphResult.findings,
       createdAt: new Date().toISOString()
     };
 
     res.status(201).json({
-      message: "Incident investigated and root cause analyzed by LangGraph agent",
+      message: "Incident investigated and remediation proposed by LangGraph agent",
       incident
     });
   } catch (error: any) {

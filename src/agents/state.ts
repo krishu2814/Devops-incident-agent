@@ -15,7 +15,10 @@ export const IncidentAnnotation = Annotation.Root({
   rootCause: Annotation<string | undefined>,
   confidence: Annotation<number | undefined>,
   confidenceLevel: Annotation<"confirmed" | "probable" | "uncertain" | undefined>,
-  evidence: Annotation<string[] | undefined>
+  evidence: Annotation<string[] | undefined>,
+  proposedAction: Annotation<"rollback" | "restart" | "scale" | "do_nothing" | undefined>,
+  targetVersion: Annotation<string | undefined>,
+  remediationReason: Annotation<string | undefined>
 });
 
 export type IncidentState = typeof IncidentAnnotation.State;

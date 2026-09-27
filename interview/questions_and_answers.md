@@ -163,3 +163,22 @@ Once this chain of diagnostic evidence is compiled into the state, the agent tra
 - **Probable:** Degradation observed (high latency/errors), but missing exact causal log traces.
 - **Uncertain:** Telemetry is incomplete or inconclusive.
 Categorizing confidence allows downstream remediation and human operators to decide whether an automated rollback is justified or whether manual investigation is required."
+
+---
+
+## 7. Remediation Plan (Phase 7)
+
+### Q: "Why should an AI agent formulate a proposed remediation rather than immediately executing it?"
+**Answer:**
+"Separating *planning* from *execution* is a cornerstone of safe DevOps agent architectures. 
+Formulating a remediation proposal allows the system to:
+1. Document the intended action (`rollback`, `restart`, `scale`, `do_nothing`) and the exact technical reason.
+2. Present a clear, reviewable blast radius to on-call operators.
+3. Pause for Human-in-the-Loop approval before any state changes occur in infrastructure, preventing unintended outages."
+
+### Q: "How does the agent decide between rollback, restart, scale, and do_nothing?"
+**Answer:**
+"- **Rollback:** Selected when the RCA detects a strong correlation between a recent code/config deployment and immediate performance degradation or error spikes.
+- **Restart:** Selected when degradation is linked to transient resource locks, memory leaks, or hung connection pools without a corresponding code change.
+- **Scale:** Selected when CPU/memory pressure is high but latency/errors stem strictly from high traffic volume rather than software bugs.
+- **Do Nothing:** Selected when the service is healthy or telemetry is inconclusive, preventing harmful unneeded actions."
