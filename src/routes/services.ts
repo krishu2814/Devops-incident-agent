@@ -3,10 +3,16 @@ import {
   getServiceHealth,
   getServiceMetrics,
   getServiceLogs,
-  getRecentDeployments
+  getRecentDeployments,
+  resetSimulatedInfrastructure
 } from "../services/infrastructure";
 
 const router = Router();
+
+router.post("/reset", (_req: Request, res: Response) => {
+  const result = resetSimulatedInfrastructure();
+  res.json(result);
+});
 
 router.get("/:name/health", async (req: Request, res: Response) => {
   try {

@@ -39,7 +39,7 @@ router.post("/", async (req: Request, res: Response) => {
       graphResult.proposedAction && graphResult.proposedAction !== "do_nothing";
 
     const incident: Incident = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
       service: graphResult.serviceName,
       message: graphResult.problem,
       status: requiresApproval ? "waiting_for_approval" : "resolved",

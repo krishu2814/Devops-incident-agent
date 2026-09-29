@@ -3,6 +3,13 @@ import { IncidentState } from "./state";
 export async function remediationNode(state: IncidentState) {
   const rootCause = state.rootCause || "";
 
+  if (rootCause.includes("does not exist") || rootCause.includes("not registered")) {
+    return {
+      proposedAction: "do_nothing" as const,
+      remediationReason: "Cannot remediate unknown service. Please verify the service name in the infrastructure catalog."
+    };
+  }
+
   if (rootCause.includes("Recent deployment") || rootCause.includes("v42")) {
     return {
       proposedAction: "rollback" as const,

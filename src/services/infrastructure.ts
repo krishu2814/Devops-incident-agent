@@ -21,7 +21,7 @@ export type Deployment = {
   description: string;
 };
 
-const services: Record<string, Service> = {
+const initialServices: Record<string, Service> = {
   "payment-service": {
     name: "payment-service",
     status: "unhealthy",
@@ -40,7 +40,7 @@ const services: Record<string, Service> = {
   }
 };
 
-const logs: Record<string, LogEntry[]> = {
+const initialLogs: Record<string, LogEntry[]> = {
   "payment-service": [
     { timestamp: "2026-09-26T18:00:00Z", level: "INFO", message: "Service started on port 8080" },
     { timestamp: "2026-09-26T18:05:00Z", level: "WARN", message: "Database query time exceeded 3000ms" },
@@ -53,7 +53,7 @@ const logs: Record<string, LogEntry[]> = {
   ]
 };
 
-const deployments: Record<string, Deployment[]> = {
+const initialDeployments: Record<string, Deployment[]> = {
   "payment-service": [
     {
       version: "v42",
@@ -80,6 +80,17 @@ const deployments: Record<string, Deployment[]> = {
     }
   ]
 };
+
+let services: Record<string, Service> = JSON.parse(JSON.stringify(initialServices));
+let logs: Record<string, LogEntry[]> = JSON.parse(JSON.stringify(initialLogs));
+let deployments: Record<string, Deployment[]> = JSON.parse(JSON.stringify(initialDeployments));
+
+export function resetSimulatedInfrastructure() {
+  services = JSON.parse(JSON.stringify(initialServices));
+  logs = JSON.parse(JSON.stringify(initialLogs));
+  deployments = JSON.parse(JSON.stringify(initialDeployments));
+  return { message: "Simulated infrastructure reset to initial state" };
+}
 
 export async function getServiceHealth(serviceName: string) {
   const service = services[serviceName];
