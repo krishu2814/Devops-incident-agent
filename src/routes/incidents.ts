@@ -8,6 +8,7 @@ import {
   rejectIncident,
   Incident
 } from "../services/incidentService";
+import { verifyServiceRecovery } from "../services/verificationService";
 
 const router = Router();
 
@@ -108,8 +109,11 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
   const { decidedBy } = (req.body || {}) as ApprovalBody;
   try {
     const updated = await approveIncident(req.params.id, decidedBy);
+    const isResolved = updated.status === "resolved";
     res.json({
-      message: "Remediation plan approved and executed successfully",
+      message: isResolved
+        ? "Remediation plan approved, executed, and service recovery verified successfully"
+        : "Remediation plan executed, but verification failed. Incident escalated for manual intervention",
       incident: updated
     });
   } catch (error: any) {
@@ -134,6 +138,26 @@ router.post("/:id/reject", (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
+});
+
+router.post("/:id/verify", async (req: Request, res: Response) => {
+  const incident = getIncidentById(req.params.id);
+  if (!incident) {
+    res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
+    return;
+  }
+
+  const verification = await verifyServiceRecovery(incident.service);
+  incident.verification = verification;
+  incident.status = verification.verified ? "resolved" : "recovery_failed";
+  incident.updatedAt = new Date().toISOString();
+
+  res.json({
+    message: verification.verified
+      ? `Service '${incident.service}' recovery verified successfully`
+      : `Service '${incident.service}' verification failed. Escalation required`,
+    incident
+  });
 });
 
 export default router;

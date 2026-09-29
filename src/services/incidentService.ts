@@ -1,10 +1,11 @@
 import { executeRemediation, RemediationExecution } from "./remediationService";
+import { verifyServiceRecovery, VerificationResult } from "./verificationService";
 
 export type Incident = {
   id: string;
   service: string;
   message: string;
-  status: "waiting_for_approval" | "approved" | "rejected" | "resolved" | "executed";
+  status: "waiting_for_approval" | "approved" | "rejected" | "resolved" | "recovery_failed" | "executed";
   rootCause?: string;
   confidence?: number;
   confidenceLevel?: "confirmed" | "probable" | "uncertain";
@@ -15,6 +16,7 @@ export type Incident = {
     reason?: string;
   };
   remediationExecution?: RemediationExecution;
+  verification?: VerificationResult;
   toolsCalled?: string[];
   findings?: string[];
   approvalDecision?: {
@@ -62,8 +64,9 @@ export async function approveIncident(id: string, decidedBy: string = "on-call-e
   const targetVersion = incident.remediation?.targetVersion;
 
   const execution = await executeRemediation(action, incident.service, targetVersion);
+  const verification = await verifyServiceRecovery(incident.service);
 
-  incident.status = "executed";
+  incident.status = verification.verified ? "resolved" : "recovery_failed";
   incident.updatedAt = new Date().toISOString();
   incident.approvalDecision = {
     decision: "approved",
@@ -71,6 +74,7 @@ export async function approveIncident(id: string, decidedBy: string = "on-call-e
     decidedBy
   };
   incident.remediationExecution = execution;
+  incident.verification = verification;
 
   return incident;
 }

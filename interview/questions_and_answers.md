@@ -235,3 +235,24 @@ To prevent flapping:
 2. **Catalog Boundaries:** If telemetry tools return `Service not found`, the RCA node recognizes that the service does not exist in the catalog, gives an explicit diagnosis with high confidence, and outputs `do_nothing` to prevent invalid remediation operations.
 3. **REST Semantics:** Endpoints return standard HTTP status codes—`400 Bad Request` for invalid transition attempts or malformed inputs, and `404 Not Found` when operating on non-existent incident resources.
 
+---
+
+## 11. Verification & Closed-Loop Remediation (Phase 10)
+
+### Q: "Why is a Verification step required after executing remediation?"
+**Answer:**
+"In autonomous operations, executing a command (e.g. rolling back or restarting) is only half the battle. A remediation action might exit with code 0 or return success, but the service could still be unresponsive, erroring out, or stuck in a crash loop.
+Closed-loop remediation requires explicit verification:
+1. Re-query live health checks and performance telemetry immediately post-execution.
+2. Validate against explicit SLA/SLO thresholds (e.g., status is `healthy`, latency <= 300ms, error rate <= 2%).
+3. If criteria pass: transition status to `resolved` and record a structured `verification` payload.
+4. If criteria fail: transition status to `recovery_failed` and immediately escalate to human on-call engineers."
+
+### Q: "Why must an automated agent never retry remediation endlessly if verification fails?"
+**Answer:**
+"Retrying failed actions in a tight loop leads to **cascading failures, thrashing, and resource depletion**:
+- Repeated restarts can overwhelm databases with reconnection storms.
+- Rolling back repeatedly without operator review can deploy incompatible database schemas.
+- If a remediation fails verification, the problem is likely outside the agent's known playbook (e.g. underlying network partition, corrupted data, or third-party provider outage). The safe operational pattern is to halt, mark `recovery_failed`, preserve all forensic logs, and alert a human engineer."
+
+
