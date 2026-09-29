@@ -25,3 +25,9 @@
 4. **Progressive Architecture (Bottom-Up)**
    - Don't build the entire architecture on day one.
    - Start with working synchronous endpoints -> simulated data -> tools -> LangGraph agent -> async queues -> databases -> Docker.
+
+5. **Production Hardening & Edge-Case Resilience**
+   - **Post-Remediation Verification & Flapping Prevention:** Active health status (`status: "healthy"`) takes precedence over historical log entries and superseded releases to prevent infinite remediation loops.
+   - **Precise Telemetry Scoping:** String matching must be scoped to specific tool outputs (e.g. checking the active release in `deployments[0].version` rather than fuzzy substring matches across entire findings).
+   - **REST & State Hygiene:** Webhook inputs must be trimmed and validated; non-existent resources return `404`; and in-memory caches and incident states must provide deterministic reset endpoints for clean testing.
+

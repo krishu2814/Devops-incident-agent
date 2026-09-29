@@ -216,3 +216,22 @@ The operator can later inspect the incident via `GET /incidents/:id` and submit 
 ### Q: "Why avoid shell command execution in remediation routines?"
 **Answer:**
 "Using TypeScript routines that invoke well-defined APIs or SDKs (like Kubernetes client SDK or CloudFormation/Terraform APIs) prevents shell injection attacks, removes OS-level dependency quirks, and ensures strict type checking over operational arguments."
+
+---
+
+## 10. Edge Cases, Resilience & Bug Prevention
+
+### Q: "How does the system prevent flapping or redundant remediation loops?"
+**Answer:**
+"A common pitfall in automated incident triage is that older telemetry (such as previous log errors or superseded deployment history) still lingers in memory or buffers after a rollback. 
+If an incident query runs on an already-recovered service, naive string matching on historical logs would falsely conclude that an active outage is underway and trigger another rollback.
+To prevent flapping:
+1. Active health check status takes precedence: if `status === 'healthy'`, the agent immediately concludes normal operation and proposes `do_nothing`.
+2. Telemetry is parsed structurally: we check whether the *active latest deployment* is the faulty release (`v42`), rather than simply checking if `v42` appears anywhere in the historical changelog."
+
+### Q: "How do you handle edge cases like unknown services or malformed webhook payloads?"
+**Answer:**
+1. **Input Sanitization:** Webhook payloads are validated to ensure `service` and `message` are non-empty strings, with whitespace trimmed.
+2. **Catalog Boundaries:** If telemetry tools return `Service not found`, the RCA node recognizes that the service does not exist in the catalog, gives an explicit diagnosis with high confidence, and outputs `do_nothing` to prevent invalid remediation operations.
+3. **REST Semantics:** Endpoints return standard HTTP status codes—`400 Bad Request` for invalid transition attempts or malformed inputs, and `404 Not Found` when operating on non-existent incident resources.
+

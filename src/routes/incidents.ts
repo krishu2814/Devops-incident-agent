@@ -22,17 +22,27 @@ type ApprovalBody = {
 };
 
 router.post("/", async (req: Request, res: Response) => {
-  const { service, message } = req.body as CreateIncidentBody;
+  const { service, message } = (req.body || {}) as CreateIncidentBody;
 
-  if (!service || !message) {
+  if (
+    !service ||
+    !message ||
+    typeof service !== "string" ||
+    typeof message !== "string" ||
+    service.trim().length === 0 ||
+    message.trim().length === 0
+  ) {
     res.status(400).json({
-      error: "Both 'service' and 'message' fields are required"
+      error: "Both 'service' and 'message' fields are required non-empty strings"
     });
     return;
   }
 
+  const cleanService = service.trim();
+  const cleanMessage = message.trim();
+
   try {
-    const graphResult = await runIncidentGraph(service, message);
+    const graphResult = await runIncidentGraph(cleanService, cleanMessage);
     const now = new Date().toISOString();
 
     const requiresApproval =
@@ -89,7 +99,13 @@ router.get("/:id", (req: Request, res: Response) => {
 });
 
 router.post("/:id/approve", async (req: Request, res: Response) => {
-  const { decidedBy } = req.body as ApprovalBody;
+  const incident = getIncidentById(req.params.id);
+  if (!incident) {
+    res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
+    return;
+  }
+
+  const { decidedBy } = (req.body || {}) as ApprovalBody;
   try {
     const updated = await approveIncident(req.params.id, decidedBy);
     res.json({
@@ -102,7 +118,13 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
 });
 
 router.post("/:id/reject", (req: Request, res: Response) => {
-  const { decidedBy, reason } = req.body as ApprovalBody;
+  const incident = getIncidentById(req.params.id);
+  if (!incident) {
+    res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
+    return;
+  }
+
+  const { decidedBy, reason } = (req.body || {}) as ApprovalBody;
   try {
     const updated = rejectIncident(req.params.id, decidedBy, reason);
     res.json({

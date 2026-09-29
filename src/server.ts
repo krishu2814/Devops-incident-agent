@@ -12,8 +12,10 @@ app.use("/health", healthRouter);
 app.use("/incidents", incidentsRouter);
 app.use("/services", servicesRouter);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;

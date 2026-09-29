@@ -25,7 +25,7 @@ export async function remediationNode(state: IncidentState) {
     };
   }
 
-  if (rootCause.includes("healthy performance thresholds") || state.findings.some(f => f.includes('"status":"healthy"'))) {
+  if (rootCause.includes("healthy performance thresholds")) {
     return {
       proposedAction: "do_nothing" as const,
       remediationReason: "Service metrics and health are currently normal. No remediation required."

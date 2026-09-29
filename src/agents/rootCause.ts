@@ -4,13 +4,27 @@ export async function rootCauseNode(state: IncidentState) {
   const findingsText = state.findings.join("\n");
   const evidence: string[] = [];
 
-  const isNotFound = findingsText.includes("not found");
-  const isHealthy = findingsText.includes("\"status\":\"healthy\"");
-  const isUnhealthy = findingsText.includes("\"status\":\"unhealthy\"");
+  const notFoundTarget = `Service '${state.serviceName}' not found`;
+  const isNotFound = findingsText.includes(notFoundTarget);
+
+  const healthFinding = state.findings.find(f => f.startsWith("[get_service_health]:")) || "";
+  const isHealthy = healthFinding.includes('"status":"healthy"');
+  const isUnhealthy = healthFinding.includes('"status":"unhealthy"');
+
+  const deploymentFinding = state.findings.find(f => f.startsWith("[get_recent_deployments]:")) || "";
+  let latestDeploymentVersion = "";
+  try {
+    const jsonStr = deploymentFinding.replace(/^\[get_recent_deployments\]:\s*/, "");
+    const parsed = JSON.parse(jsonStr);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      latestDeploymentVersion = parsed[0].version;
+    }
+  } catch {}
+
+  const hasRecentDeployment = latestDeploymentVersion === "v42";
   const hasSlowQueries = findingsText.includes("Database query time exceeded");
   const hasPoolExhaustion = findingsText.includes("Database connection pool exhausted");
   const has504Timeout = findingsText.includes("504 Gateway Timeout");
-  const hasRecentDeployment = findingsText.includes("v42");
 
   if (isNotFound) {
     evidence.push(`Service '${state.serviceName}' was not found in infrastructure monitoring catalog`);
@@ -22,10 +36,18 @@ export async function rootCauseNode(state: IncidentState) {
     };
   }
 
+  if (isHealthy && !isUnhealthy) {
+    evidence.push("Service health check returned 'healthy'");
+    return {
+      rootCause: "Service is operating within healthy performance thresholds with no active errors",
+      confidence: 0.95,
+      confidenceLevel: "confirmed" as const,
+      evidence
+    };
+  }
+
   if (isUnhealthy) {
     evidence.push("Service health check returned 'unhealthy'");
-  } else if (isHealthy) {
-    evidence.push("Service health check returned 'healthy'");
   }
 
   if (hasSlowQueries) {
@@ -58,15 +80,6 @@ export async function rootCauseNode(state: IncidentState) {
       rootCause: "Database performance degradation causing request latency and error rate spikes",
       confidence: 0.70,
       confidenceLevel: "probable" as const,
-      evidence
-    };
-  }
-
-  if (isHealthy) {
-    return {
-      rootCause: "Service is operating within healthy performance thresholds with no active errors",
-      confidence: 0.95,
-      confidenceLevel: "confirmed" as const,
       evidence
     };
   }

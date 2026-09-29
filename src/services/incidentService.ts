@@ -42,6 +42,12 @@ export function getAllIncidents(): Incident[] {
   return Object.values(incidents);
 }
 
+export function resetIncidents(): void {
+  for (const key of Object.keys(incidents)) {
+    delete incidents[key];
+  }
+}
+
 export async function approveIncident(id: string, decidedBy: string = "on-call-engineer"): Promise<Incident> {
   const incident = incidents[id];
   if (!incident) {

@@ -122,7 +122,8 @@ export async function getServiceLogs(serviceName: string, limit: number = 10) {
   if (!serviceLogs) {
     throw new Error(`Logs for service '${serviceName}' not found`);
   }
-  return serviceLogs.slice(-limit);
+  const safeLimit = Math.max(1, limit || 10);
+  return serviceLogs.slice(-safeLimit);
 }
 
 export async function getRecentDeployments(serviceName: string) {
@@ -209,6 +210,7 @@ export async function scaleService(serviceName: string, replicas: number = 3) {
   service.cpuUsagePercent = 25;
   service.memoryUsagePercent = 32;
   service.latencyMs = 150;
+  service.errorRatePercent = 1;
 
   const serviceLogs = logs[serviceName] || [];
   serviceLogs.push({
@@ -222,6 +224,7 @@ export async function scaleService(serviceName: string, replicas: number = 3) {
     action: "scale",
     replicas,
     status: service.status,
-    latencyMs: service.latencyMs
+    latencyMs: service.latencyMs,
+    errorRatePercent: service.errorRatePercent
   };
 }
