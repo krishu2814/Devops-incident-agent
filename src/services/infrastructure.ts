@@ -1,3 +1,10 @@
+import {
+  cacheGet,
+  cacheSet,
+  invalidateServiceCache,
+  cacheFlushAll
+} from "./redisService";
+
 export type Service = {
   name: string;
   status: "healthy" | "unhealthy";
@@ -89,6 +96,7 @@ export function resetSimulatedInfrastructure() {
   services = JSON.parse(JSON.stringify(initialServices));
   logs = JSON.parse(JSON.stringify(initialLogs));
   deployments = JSON.parse(JSON.stringify(initialDeployments));
+  cacheFlushAll();
   return { message: "Simulated infrastructure reset to initial state" };
 }
 
@@ -104,26 +112,53 @@ export async function getServiceHealth(serviceName: string) {
 }
 
 export async function getServiceMetrics(serviceName: string) {
+  const cacheKey = `telemetry:metrics:${serviceName}`;
+  const cached = await cacheGet<{
+    service: string;
+    latencyMs: number;
+    errorRatePercent: number;
+    cpuUsagePercent: number;
+    memoryUsagePercent: number;
+  }>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   const service = services[serviceName];
   if (!service) {
     throw new Error(`Service '${serviceName}' not found`);
   }
-  return {
+
+  const result = {
     service: service.name,
     latencyMs: service.latencyMs,
     errorRatePercent: service.errorRatePercent,
     cpuUsagePercent: service.cpuUsagePercent,
     memoryUsagePercent: service.memoryUsagePercent
   };
+
+  await cacheSet(cacheKey, result, 15);
+  return result;
 }
 
 export async function getServiceLogs(serviceName: string, limit: number = 10) {
+  const safeLimit = Math.max(1, limit || 10);
+  const cacheKey = `telemetry:logs:${serviceName}:${safeLimit}`;
+  const cached = await cacheGet<LogEntry[]>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
   const serviceLogs = logs[serviceName];
   if (!serviceLogs) {
     throw new Error(`Logs for service '${serviceName}' not found`);
   }
-  const safeLimit = Math.max(1, limit || 10);
-  return serviceLogs.slice(-safeLimit);
+
+  const result = serviceLogs.slice(-safeLimit);
+  await cacheSet(cacheKey, result, 15);
+  return result;
 }
 
 export async function getRecentDeployments(serviceName: string) {
@@ -162,6 +197,8 @@ export async function rollbackDeployment(serviceName: string, targetVersion: str
     message: `Service rolled back to ${targetVersion}. Connection pool reset and latency normalized.`
   });
 
+  await invalidateServiceCache(serviceName);
+
   return {
     service: serviceName,
     action: "rollback",
@@ -191,6 +228,8 @@ export async function restartService(serviceName: string) {
     message: "Service restarted. Hung database connections terminated."
   });
 
+  await invalidateServiceCache(serviceName);
+
   return {
     service: serviceName,
     action: "restart",
@@ -218,6 +257,8 @@ export async function scaleService(serviceName: string, replicas: number = 3) {
     level: "INFO",
     message: `Service scaled to ${replicas} replicas. Load distributed.`
   });
+
+  await invalidateServiceCache(serviceName);
 
   return {
     service: serviceName,

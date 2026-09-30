@@ -7,6 +7,7 @@ import {
   resetSimulatedInfrastructure
 } from "../services/infrastructure";
 import { resetIncidents } from "../services/incidentService";
+import { getCacheStatus, cacheFlushAll } from "../services/redisService";
 
 const router = Router();
 
@@ -17,6 +18,16 @@ router.post("/reset", (_req: Request, res: Response) => {
     ...result,
     incidents: "Incidents history cleared"
   });
+});
+
+router.get("/cache/status", async (_req: Request, res: Response) => {
+  const status = await getCacheStatus();
+  res.json(status);
+});
+
+router.post("/cache/clear", async (_req: Request, res: Response) => {
+  await cacheFlushAll();
+  res.json({ message: "Telemetry cache and agent sessions cleared" });
 });
 
 router.get("/:name/health", async (req: Request, res: Response) => {

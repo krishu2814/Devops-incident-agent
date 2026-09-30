@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 10 Complete (Ready for Phase 11)
-- **Completed:** 10 / 18 Phases
-- **Remaining:** 8 Phases
+- **Current Phase:** Phase 11 Complete (Ready for Phase 12)
+- **Completed:** 11 / 18 Phases
+- **Remaining:** 7 Phases
 
 ---
 
@@ -21,7 +21,7 @@
 | **Phase 8** | Human-in-the-Loop | Completed | In-memory `incidentService.ts`, `waiting_for_approval` state gate, `POST /incidents/:id/approve` and `POST /incidents/:id/reject` endpoints |
 | **Phase 9** | Execute Remediation | Completed | Mutate simulated infrastructure state upon human approval (`rollbackDeployment`, `restartService`, `scaleService`, `remediationService.ts`) |
 | **Phase 10** | Verification | Completed | `verificationService.ts`, `verifyServiceRecovery`, SLA/SLO validation, status transition to `resolved` or `recovery_failed`, `POST /incidents/:id/verify` |
-| **Phase 11** | Redis | Upcoming | Caching tool results and storing transient agent state |
+| **Phase 11** | Redis | Completed | `redisService.ts` (`ioredis` + resilient in-memory fallback), telemetry caching, agent session caching (`GET /incidents/sessions/:id`), cache invalidation, cache management endpoints |
 | **Phase 12** | PostgreSQL + Prisma | Upcoming | Relational persistence for incidents, audit trails, and decisions |
 | **Phase 13** | Background Jobs (BullMQ + Worker) | Upcoming | Asynchronous investigation queue decoupled from HTTP request |
 | **Phase 14** | Streaming / Status (SSE) | Upcoming | Server-Sent Events for real-time investigation steps |
@@ -32,9 +32,10 @@
 
 ---
 
-## Detailed Execution Plan for Phase 11 (Next)
-1. **Redis Client Setup:** Add `ioredis` (or lightweight mock fallback for offline development) to manage Redis connection.
-2. **Telemetry Caching:** Cache repeated diagnostic tool calls (`get_service_metrics`, `search_logs`) with TTL to prevent hammering production telemetry APIs during incident storms.
-3. **Transient Agent State Store:** Store in-progress LangGraph checkpoint / investigation states in Redis with automatic expiration.
-4. **Cache Invalidation:** Invalidate cached telemetry when a remediation action is executed to guarantee fresh verification reads.
+## Detailed Execution Plan for Phase 12 (Next)
+1. **Prisma Setup:** Install `prisma` and `@prisma/client`. Initialize Prisma schema.
+2. **Schema Definition:** Define models for `Incident`, `Evidence`, `RemediationAction`, `VerificationResult`, and `AuditLog`.
+3. **Database Client & Migration:** Provide typed Prisma client singleton with fallback SQLite/in-memory adapter for offline development.
+4. **Repository Layer:** Replace in-memory `incidentService` storage with Prisma database queries while preserving all existing API contracts.
+
 

@@ -9,6 +9,7 @@ import {
   Incident
 } from "../services/incidentService";
 import { verifyServiceRecovery } from "../services/verificationService";
+import { getAgentSession } from "../services/redisService";
 
 const router = Router();
 
@@ -43,14 +44,15 @@ router.post("/", async (req: Request, res: Response) => {
   const cleanMessage = message.trim();
 
   try {
-    const graphResult = await runIncidentGraph(cleanService, cleanMessage);
+    const incidentId = `${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const graphResult = await runIncidentGraph(cleanService, cleanMessage, incidentId);
     const now = new Date().toISOString();
 
     const requiresApproval =
       graphResult.proposedAction && graphResult.proposedAction !== "do_nothing";
 
     const incident: Incident = {
-      id: `${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: incidentId,
       service: graphResult.serviceName,
       message: graphResult.problem,
       status: requiresApproval ? "waiting_for_approval" : "resolved",
@@ -88,6 +90,15 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", (_req: Request, res: Response) => {
   const all = getAllIncidents();
   res.json({ incidents: all });
+});
+
+router.get("/sessions/:id", async (req: Request, res: Response) => {
+  const session = await getAgentSession(req.params.id);
+  if (!session) {
+    res.status(404).json({ error: `Session for incident '${req.params.id}' not found in cache` });
+    return;
+  }
+  res.json({ session });
 });
 
 router.get("/:id", (req: Request, res: Response) => {

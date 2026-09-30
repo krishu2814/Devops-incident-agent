@@ -26,7 +26,9 @@ export const incidentGraph = new StateGraph(IncidentAnnotation)
   .addEdge("remediation", END)
   .compile();
 
-export async function runIncidentGraph(serviceName: string, problem: string) {
+import { saveAgentSession } from "../services/redisService";
+
+export async function runIncidentGraph(serviceName: string, problem: string, sessionId?: string) {
   const finalState = await incidentGraph.invoke({
     serviceName,
     problem,
@@ -34,5 +36,8 @@ export async function runIncidentGraph(serviceName: string, problem: string) {
     toolsCalled: [],
     nextAction: ""
   });
+  if (sessionId) {
+    await saveAgentSession(sessionId, finalState, 3600);
+  }
   return finalState;
 }

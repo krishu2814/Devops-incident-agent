@@ -255,4 +255,21 @@ Closed-loop remediation requires explicit verification:
 - Rolling back repeatedly without operator review can deploy incompatible database schemas.
 - If a remediation fails verification, the problem is likely outside the agent's known playbook (e.g. underlying network partition, corrupted data, or third-party provider outage). The safe operational pattern is to halt, mark `recovery_failed`, preserve all forensic logs, and alert a human engineer."
 
+---
+
+## 12. Redis: Caching & Transient State (Phase 11)
+
+### Q: "What role does Redis play in this DevOps incident triage architecture?"
+**Answer:**
+"Redis fulfills two critical production roles:
+1. **Telemetry Caching:** During an alert storm or major incident, hundreds of alerts or concurrent agent runs can trigger. Repeatedly querying live Prometheus, Datadog, or CloudWatch endpoints for the exact same metrics or logs can cause rate limiting or degrade observability systems. We cache service telemetry with a short TTL (15–30 seconds).
+2. **Transient Agent State Store:** LangGraph node execution states and intermediate findings are stored in Redis under `session:${incidentId}` with a 1-hour expiration. This decouples the agent execution state from the Node.js memory heap and allows frontend dashboards or SSE streams to inspect in-progress progress without querying the primary database.
+3. **Resilient Local Fallback:** In development or CI, if Redis is not running, the system transparently falls back to an in-memory TTL-capable storage adapter without crashing or failing builds."
+
+### Q: "How do you handle Cache Invalidation when a remediation action executes?"
+**Answer:**
+"If telemetry is cached with a 30-second TTL, a post-remediation verification query could read stale unhealthy metrics from the cache and falsely declare that recovery failed!
+To solve this, our remediation routines (`rollbackDeployment`, `restartService`, `scaleService`) explicitly call `invalidateServiceCache(serviceName)`. This purges all telemetry keys for that service before verification runs, guaranteeing that verification queries fresh, live data."
+
+
 
