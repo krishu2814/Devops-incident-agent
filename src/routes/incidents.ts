@@ -162,6 +162,7 @@ router.post("/:id/verify", async (req: Request, res: Response) => {
   incident.verification = verification;
   incident.status = verification.verified ? "resolved" : "recovery_failed";
   incident.updatedAt = new Date().toISOString();
+  saveIncident(incident);
 
   res.json({
     message: verification.verified

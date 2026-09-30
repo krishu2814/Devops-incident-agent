@@ -92,11 +92,11 @@ let services: Record<string, Service> = JSON.parse(JSON.stringify(initialService
 let logs: Record<string, LogEntry[]> = JSON.parse(JSON.stringify(initialLogs));
 let deployments: Record<string, Deployment[]> = JSON.parse(JSON.stringify(initialDeployments));
 
-export function resetSimulatedInfrastructure() {
+export async function resetSimulatedInfrastructure() {
   services = JSON.parse(JSON.stringify(initialServices));
   logs = JSON.parse(JSON.stringify(initialLogs));
   deployments = JSON.parse(JSON.stringify(initialDeployments));
-  cacheFlushAll();
+  await cacheFlushAll();
   return { message: "Simulated infrastructure reset to initial state" };
 }
 

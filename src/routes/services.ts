@@ -11,9 +11,9 @@ import { getCacheStatus, cacheFlushAll } from "../services/redisService";
 
 const router = Router();
 
-router.post("/reset", (_req: Request, res: Response) => {
+router.post("/reset", async (_req: Request, res: Response) => {
   resetIncidents();
-  const result = resetSimulatedInfrastructure();
+  const result = await resetSimulatedInfrastructure();
   res.json({
     ...result,
     incidents: "Incidents history cleared"

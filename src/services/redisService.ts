@@ -23,9 +23,9 @@ class MemoryCache {
   }
 
   async delPattern(pattern: string): Promise<void> {
-    const prefix = pattern.replace("*", "");
+    const regex = new RegExp("^" + pattern.replace(/\*/g, ".*"));
     for (const key of this.store.keys()) {
-      if (key.startsWith(prefix)) {
+      if (regex.test(key)) {
         this.store.delete(key);
       }
     }
@@ -115,8 +115,7 @@ export async function invalidateServiceCache(serviceName: string): Promise<void>
         await redisClient.del(...keys);
       }
     } else {
-      await memoryCache.delPattern(`telemetry:metrics:${serviceName}`);
-      await memoryCache.delPattern(`telemetry:logs:${serviceName}`);
+      await memoryCache.delPattern(`telemetry:*:${serviceName}*`);
     }
   } catch {}
 }
