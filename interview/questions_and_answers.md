@@ -271,5 +271,31 @@ Closed-loop remediation requires explicit verification:
 "If telemetry is cached with a 30-second TTL, a post-remediation verification query could read stale unhealthy metrics from the cache and falsely declare that recovery failed!
 To solve this, our remediation routines (`rollbackDeployment`, `restartService`, `scaleService`) explicitly call `invalidateServiceCache(serviceName)`. This purges all telemetry keys for that service before verification runs, guaranteeing that verification queries fresh, live data."
 
+---
+
+## 13. Relational Persistence & Audit Trails (Phase 12)
+
+### Q: "Why did you choose a relational database (PostgreSQL + Prisma) for incidents instead of keeping everything in Redis or in memory?"
+**Answer:**
+"In an SRE and DevOps incident response platform, data durability, referential integrity, and compliance are paramount:
+1. **Durability & Post-Mortems:** In-memory storage is lost on process restart. Redis is primarily an in-memory cache and message broker. For incident post-mortems (PIRs) and regulatory reporting, incidents, evidence, and operator decisions must be durably stored in an ACID-compliant relational database.
+2. **Relational Integrity:** An incident is a complex relational entity. It has 1-to-many diagnostic evidence, 1-to-1 remediation plans, 1-to-1 verification metrics, and an append-only audit trail. Relational foreign keys and cascading rules guarantee consistency.
+3. **Type-Safety with Prisma:** Prisma automatically generates TypeScript types from the database schema, preventing runtime mismatches between application models and database records."
+
+### Q: "Can you walk through your Prisma schema design for incidents?"
+**Answer:**
+"We modeled the incident lifecycle as a normalized relational schema:
+- **`Incident` (Aggregate Root):** Stores the incident ID, service name, alert message, lifecycle status (`waiting_for_approval`, `approved`, `rejected`, `resolved`, `recovery_failed`), root cause diagnosis, confidence level, and timestamps.
+- **`Evidence` (1-to-Many):** Tracks individual forensic findings gathered by the LangGraph agent tools (`[get_service_health]`, `[search_logs]`, etc.) linked to the incident with `onDelete: Cascade`.
+- **`Remediation` (1-to-1):** Stores the proposed action (`rollback`, `restart`, `scale`, `do_nothing`), target version, technical justification, execution flag, and timestamp.
+- **`Verification` (1-to-1):** Records post-remediation verification telemetry (health status, latency in ms, error rate percentage, and verification message).
+- **`ApprovalDecision` (1-to-1):** Documents the human-in-the-loop decision, operator identity (`decidedBy`), timestamp, and review rationale.
+- **`AuditLog` (1-to-Many):** An immutable compliance log recording every lifecycle transition (`created`, `approved`, `rejected`, `verified`) with detailed JSON context."
+
+### Q: "How does the system ensure local developer convenience while maintaining production readiness?"
+**Answer:**
+"For local development and unit testing, we configure Prisma with a file-based SQLite database (`file:./dev.db`), allowing any engineer to clone and run the application instantly with zero external database dependencies or port conflicts. In containerized production (Phase 17 Docker Compose), the exact same Prisma queries operate against PostgreSQL with connection pooling, maintaining clean separation of concerns."
+
+
 
 

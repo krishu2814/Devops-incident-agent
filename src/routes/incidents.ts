@@ -6,6 +6,7 @@ import {
   getAllIncidents,
   approveIncident,
   rejectIncident,
+  getIncidentAuditLogs,
   Incident
 } from "../services/incidentService";
 import { verifyServiceRecovery } from "../services/verificationService";
@@ -71,7 +72,7 @@ router.post("/", async (req: Request, res: Response) => {
       updatedAt: now
     };
 
-    saveIncident(incident);
+    await saveIncident(incident);
 
     res.status(201).json({
       message: requiresApproval
@@ -87,8 +88,8 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/", (_req: Request, res: Response) => {
-  const all = getAllIncidents();
+router.get("/", async (_req: Request, res: Response) => {
+  const all = await getAllIncidents();
   res.json({ incidents: all });
 });
 
@@ -101,8 +102,8 @@ router.get("/sessions/:id", async (req: Request, res: Response) => {
   res.json({ session });
 });
 
-router.get("/:id", (req: Request, res: Response) => {
-  const incident = getIncidentById(req.params.id);
+router.get("/:id", async (req: Request, res: Response) => {
+  const incident = await getIncidentById(req.params.id);
   if (!incident) {
     res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
     return;
@@ -110,8 +111,22 @@ router.get("/:id", (req: Request, res: Response) => {
   res.json({ incident });
 });
 
+router.get("/:id/audit", async (req: Request, res: Response) => {
+  const incident = await getIncidentById(req.params.id);
+  if (!incident) {
+    res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
+    return;
+  }
+
+  const auditLogs = await getIncidentAuditLogs(req.params.id);
+  res.json({
+    incidentId: req.params.id,
+    auditLogs
+  });
+});
+
 router.post("/:id/approve", async (req: Request, res: Response) => {
-  const incident = getIncidentById(req.params.id);
+  const incident = await getIncidentById(req.params.id);
   if (!incident) {
     res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
     return;
@@ -132,8 +147,8 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/:id/reject", (req: Request, res: Response) => {
-  const incident = getIncidentById(req.params.id);
+router.post("/:id/reject", async (req: Request, res: Response) => {
+  const incident = await getIncidentById(req.params.id);
   if (!incident) {
     res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
     return;
@@ -141,7 +156,7 @@ router.post("/:id/reject", (req: Request, res: Response) => {
 
   const { decidedBy, reason } = (req.body || {}) as ApprovalBody;
   try {
-    const updated = rejectIncident(req.params.id, decidedBy, reason);
+    const updated = await rejectIncident(req.params.id, decidedBy, reason);
     res.json({
       message: "Remediation plan rejected by operator. Execution halted safely.",
       incident: updated
@@ -152,7 +167,7 @@ router.post("/:id/reject", (req: Request, res: Response) => {
 });
 
 router.post("/:id/verify", async (req: Request, res: Response) => {
-  const incident = getIncidentById(req.params.id);
+  const incident = await getIncidentById(req.params.id);
   if (!incident) {
     res.status(404).json({ error: `Incident with id '${req.params.id}' not found` });
     return;
@@ -162,7 +177,7 @@ router.post("/:id/verify", async (req: Request, res: Response) => {
   incident.verification = verification;
   incident.status = verification.verified ? "resolved" : "recovery_failed";
   incident.updatedAt = new Date().toISOString();
-  saveIncident(incident);
+  await saveIncident(incident);
 
   res.json({
     message: verification.verified

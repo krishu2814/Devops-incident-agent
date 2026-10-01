@@ -12,7 +12,7 @@ import { getCacheStatus, cacheFlushAll } from "../services/redisService";
 const router = Router();
 
 router.post("/reset", async (_req: Request, res: Response) => {
-  resetIncidents();
+  await resetIncidents();
   const result = await resetSimulatedInfrastructure();
   res.json({
     ...result,

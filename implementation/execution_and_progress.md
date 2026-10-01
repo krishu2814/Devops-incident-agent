@@ -1,9 +1,9 @@
 # Project Execution & Phase Progress Tracker
 
 ## Status Summary
-- **Current Phase:** Phase 11 Complete & Audited (All 10 integration suites passing, ready for Phase 12)
-- **Completed:** 11 / 18 Phases
-- **Remaining:** 7 Phases
+- **Current Phase:** Phase 12 Complete (Ready for Phase 13)
+- **Completed:** 12 / 18 Phases
+- **Remaining:** 6 Phases
 
 ---
 
@@ -22,7 +22,7 @@
 | **Phase 9** | Execute Remediation | Completed | Mutate simulated infrastructure state upon human approval (`rollbackDeployment`, `restartService`, `scaleService`, `remediationService.ts`) |
 | **Phase 10** | Verification | Completed | `verificationService.ts`, `verifyServiceRecovery`, SLA/SLO validation, status transition to `resolved` or `recovery_failed`, `POST /incidents/:id/verify` |
 | **Phase 11** | Redis | Completed | `redisService.ts` (`ioredis` + resilient in-memory fallback), telemetry caching, agent session caching (`GET /incidents/sessions/:id`), cache invalidation, cache management endpoints |
-| **Phase 12** | PostgreSQL + Prisma | Upcoming | Relational persistence for incidents, audit trails, and decisions |
+| **Phase 12** | PostgreSQL + Prisma | Completed | Relational schema in `prisma/schema.prisma` (`Incident`, `Evidence`, `Remediation`, `Verification`, `ApprovalDecision`, `AuditLog`), `db.ts` client singleton, `incidentService.ts` DB persistence, `GET /incidents/:id/audit` |
 | **Phase 13** | Background Jobs (BullMQ + Worker) | Upcoming | Asynchronous investigation queue decoupled from HTTP request |
 | **Phase 14** | Streaming / Status (SSE) | Upcoming | Server-Sent Events for real-time investigation steps |
 | **Phase 15** | Error Handling | Upcoming | Robust try/catch, LLM fallback, graceful degradation |
@@ -32,10 +32,8 @@
 
 ---
 
-## Detailed Execution Plan for Phase 12 (Next)
-1. **Prisma Setup:** Install `prisma` and `@prisma/client`. Initialize Prisma schema.
-2. **Schema Definition:** Define models for `Incident`, `Evidence`, `RemediationAction`, `VerificationResult`, and `AuditLog`.
-3. **Database Client & Migration:** Provide typed Prisma client singleton with fallback SQLite/in-memory adapter for offline development.
-4. **Repository Layer:** Replace in-memory `incidentService` storage with Prisma database queries while preserving all existing API contracts.
-
-
+## Detailed Execution Plan for Phase 13 (Next)
+1. **BullMQ & Worker Architecture:** Install `bullmq` and design the job queue architecture.
+2. **Queue Setup:** Create an `incidentQueue` that receives new incident payloads and returns a job token (`jobId`) immediately with HTTP 202 Accepted.
+3. **Worker Processing:** Implement background worker process running the LangGraph agent graph asynchronously, persisting steps and status to Prisma and Redis.
+4. **Job Status API:** Provide `GET /incidents/jobs/:id` for polling queue job status (`waiting`, `active`, `completed`, `failed`).

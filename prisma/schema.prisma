@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Incident {
+  id              String             @id
+  service         String
+  message         String
+  status          String
+  rootCause       String?
+  confidence      Float?
+  confidenceLevel String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  evidence        Evidence[]
+  remediation     Remediation?
+  verification    Verification?
+  decision        ApprovalDecision?
+  auditLogs       AuditLog[]
+}
+
+model Evidence {
+  id          String   @id @default(uuid())
+  incidentId  String
+  finding     String
+  createdAt   DateTime @default(now())
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Remediation {
+  id               String   @id @default(uuid())
+  incidentId       String   @unique
+  action           String
+  targetVersion    String?
+  reason           String?
+  executed         Boolean  @default(false)
+  executedAt       String?
+  executionDetails String?
+  incident         Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id               String   @id @default(uuid())
+  incidentId       String   @unique
+  verified         Boolean
+  status           String
+  latencyMs        Int
+  errorRatePercent Int
+  verifiedAt       String
+  message          String
+  incident         Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model ApprovalDecision {
+  id         String   @id @default(uuid())
+  incidentId String   @unique
+  decision   String
+  decidedBy  String
+  decidedAt  String
+  reason     String?
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  incidentId String
+  action     String
+  details    String
+  timestamp  DateTime @default(now())
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
